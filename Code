@@ -14,7 +14,7 @@ bool boardissolved();
 void eraseerror();
 void backtracking();
 
-/* This program is a sudoku game / sudoku that I made throughout the summer of 2017. Through this program, a person can play a game of sudoku, choosing from three levels of difficulty.
+/* This program is a sudoku game / sudoku solver that I made throughout the summer of 2017. Through this program, a person can play a game of sudoku, choosing from three levels of difficulty.
 Additionally, tihs program can solve any possible sudoku board, as long as it is uploaded properly through a text file. Enjoy!
 */
 
