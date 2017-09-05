@@ -1,0 +1,421 @@
+#include<iostream>
+#include<fstream>
+#include <string>
+#include<istream>
+using namespace std;
+
+void introduction();
+char yesORno();
+void printboard();
+void readinfile(string filename);
+bool sepinarow(int i);
+bool sepinacol(int j);
+bool sepinabox(int i, int j);
+void playgame();
+void makemove();
+bool boardissolved();
+void eraseerror();
+void backtracking();
+
+/* This program is a sudoku game / sudoku solver that I made throughout the summer of 2017. Through this program, a person can play a game of sudoku, choosing from three levels of difficulty.
+Additionally, tihs program can solve any possible sudoku board, as long as it is uploaded properly through a text file. Enjoy!
+*/
+
+char board[9][9];
+char copyboard[9][9];
+int row;
+int col;
+
+
+
+
+int main() {
+	/* If the person wants to play, they will be led to the playgame function. If they don't want to play, they probably want to upload a file to solve.*/
+	cout << "Hello! Do you wanna play? ";
+	if (yesORno() == 'y'){
+		playgame();
+		// Until the board is solved, have the player make a move
+		while (!boardissolved()) {
+			makemove();
+		}
+		cout << endl << "Congrats! You win!";
+	}
+	else {
+		cout << endl << "How about giving a file for my solver! Yes or no? ";
+		if (yesORno() == 'y') {
+			cout << endl << "Welcome to the Sudoku Game! Please enter the file you want to open: ";
+			string filename;
+			cin >> filename;
+			readinfile(filename);
+			while (!boardissolved()) {
+				backtracking();
+			}
+			// Now that the board is done, print it
+			printboard();
+			cout << endl << "Presto Chango";
+		}
+			// If they keep saying no, tell them to go away
+		else {
+			cout << endl << "Go away, then!";
+		}
+	}
+	return 0;
+}
+
+char yesORno() {
+	string answer;
+	cin >> answer;
+	while (answer != "yes" && answer != "Yes" && answer != "YES" && answer != "y" && answer != "Y"
+		&& answer != "no" && answer != "No" && answer != "NO" && answer != "n" && answer != "N") {
+		cout << endl << "Try again: ";
+		cin >> answer;
+	}
+	if (answer == "yes" || answer == "Yes" || answer == "YES" || answer == "y" || answer == "Y") {
+		return 'y';
+	}
+	else {
+		return 'n';
+	}
+}
+
+void printboard() {
+	int row = 0;
+	int col = 0;
+	int printing = 0;
+	cout << "  ";
+	// The code below is merely an instruction to how to print the board in a fancy way
+	while (printing < 24) {
+		cout << "-";
+		printing++;
+	}
+	cout << endl;
+	// Iterate through our array (the game board), printing the value of each index of the array
+	for (row = 0; row < 9; row++) {
+		cout << "  |";
+		for (col = 0; col < 9; col++) {
+			cout << board[row][col] << " ";
+			if (col == 2 || col == 5 || col == 8) {
+				cout << "| ";
+			}
+		}
+		cout << endl;
+		printing = 0;
+		cout << "  ";
+		while (printing < 24) {
+			if (printing == 7 || printing == 15 || printing == 23 || printing == 0) {
+				cout << "+";
+				printing++;
+			}
+			if ((row == 2 || row == 5 || row == 8) && (printing != 24)) {
+				cout << "=";
+				printing++;
+			}
+			else {
+				cout << " ";
+				printing++;
+			}
+		}
+		cout << endl;
+	}
+}
+
+void readinfile(string filename) {
+	ifstream ins;
+	filename = filename + ".txt";
+	ins.open(filename);
+	char readin;
+	int answer = 0;
+	// Place the elements of the file into the array (game board) one index at a time
+	for (int row = 0; row < 9; row++) {
+		for (int col = 0; col < 9; col++) {
+			ins >> readin;
+			if (readin > 48 && readin < 58) {
+				board[row][col] = readin;
+			}
+			else {
+				// If there's no number in a given index, print a space character
+				board[row][col] = 32;
+			}
+		}
+	}
+	ins.close();
+}
+
+
+void playgame() {
+	cout << endl << "Easy, medium, or hard? ";
+	int x = 1;
+	string difficulty;
+	// Within the difficulty the user selects, open the corresponding file and convert the numbers in the file into the sudoku board
+	while (x == 1) {
+		cin >> difficulty;
+		if (difficulty == "easy" || difficulty == "EASY" || difficulty == "E" || difficulty == "e") {
+			readinfile("easy");
+			x = 0;
+		}
+		else if (difficulty == "medium" || difficulty == "MEDIUM" || difficulty == "M" || difficulty == "m") {
+			readinfile("med");
+			x = 0;
+		}
+		else if (difficulty == "hard" || difficulty == "HARD" || difficulty == "H" || difficulty == "h") {
+			readinfile("hard");
+			x = 0;
+		}
+		else {
+			cout << endl << "Pardon? ";
+		}
+	}
+	printboard();
+
+	// Make a "copy" of the board by iterating through the original board and copying values
+	for (int i = 0; i < 9; i++) {
+		for (int j = 0; j < 9; j++) {
+			copyboard[i][j] = board[i][j];
+		}
+	}
+}
+
+bool boardissolved() {
+	// Iterate through each index of the array
+	for (int row = 0; row < 9; row++) {
+		for (int col = 0; col < 9; col++) {
+			if (board[row][col] == ' ' || board[row][col] == '0' || board[row][col] == '-') {
+				return false;
+			}
+		}
+	}
+	// If there's no space or 0 or dash in any of the indices of the array, the board is solved
+	return true;
+}
+
+void makemove() {
+
+	// Have the user enter a row
+	cout << endl << "Enter a row: ";
+	int row = 0;
+	string rowascii;
+	cin >> rowascii;
+	while (!(rowascii[0] > 48 && rowascii[0] < 58)) {
+		// Get rid of the junk in the buffer if the character being read is not 0 through 9
+		getline(cin, rowascii);
+		cout << endl << "Try again: ";
+		cin >> rowascii;
+	}
+	// Convert the ascii value of the row character into an integer
+	row = rowascii[0] - 48;
+	// Have the user enter a column
+	cout << endl << "Enter a column: ";
+	int col = 0;
+	string colascii;
+	cin >> colascii;
+	while (!(colascii[0] > 48 && colascii[0] < 58)) {
+		// Get rid of the junk in the buffer if the character being read is not 0 through 9
+		getline(cin, colascii);
+		cout << endl << "Try again: ";
+		cin >> colascii;
+	}
+	// Convert the ascii value of the column character into an integer
+	col = colascii[0] - 48;
+	// Have the user enter a value
+	cout << endl << "Enter a value: ";
+	int value = 0;
+	string asciivalue;
+	cin >> asciivalue;
+	while (!(asciivalue[0] > 48 && asciivalue[0] < 58)) {
+		// Get rid of the junk in the buffer if the character being read is not 0 through 9
+		getline(cin, asciivalue);
+		cout << endl << "Try again: " << endl;
+	}
+	if (board[row - 1][col - 1] == ' ') {
+		// If the board is empty, fill in the value
+		board[row - 1][col - 1] = asciivalue[0];
+		// If this move breaks a rule, reverse the fill-in
+		if (!(sepinarow(row - 1) && sepinacol(col - 1) && sepinabox(row - 1, col - 1))) {
+			board[row - 1][col - 1] = ' ';
+			cout << "invalid move!\n";
+			printboard();
+		}
+		else {
+			printboard();
+			eraseerror();
+		}
+	}
+	else {
+		cout << "invalid move!\n";
+	}
+}
+
+void eraseerror() {
+	cout << endl << "Type '0' if you made an error, and '1' if you didn't make an error: ";
+	int choice;
+	int row = 0;
+	int col = 0;
+	cin >> choice;
+	if (choice == 0) {
+		// Have the user enter the errored row
+		cout << endl << "Enter the errored row: ";
+		string erroredrow;
+		cin >> erroredrow;
+		// If the row # is not 0 through 9, clear the junk and try again
+		while (!(erroredrow[0] > 48 && erroredrow[0] < 58)) {
+			getline(cin, erroredrow);
+			cout << endl << "Try again: ";
+			cin >> erroredrow;
+		}
+		// Convert the row character to an integer
+		row = erroredrow[0] - 48;
+		// Have the user enter the errored column
+		cout << endl << "Enter the errored column: ";
+		string erroredcol;
+		cin >> erroredcol;
+		// If the column is not 0 through 9, clear the junk and try again
+		while (!(erroredcol[0] > 48 && erroredcol[0] < 58)) {
+			getline(cin, erroredcol);
+			cout << endl << "Try again: ";
+			cin >> erroredcol;
+		}
+		// Convert the column character to an integer
+		col = erroredcol[0] - 48;
+		// If the copy of the board is filled in that particular index, have them not be able to erase
+		if (copyboard[row - 1][col - 1] != 32) {
+			cout << endl << "Can't do that!" << endl;
+		}
+		// Else, let them erase
+		else {
+			board[row - 1][col - 1] = ' ';
+		}
+		printboard();
+	}
+}
+
+struct Pair {
+	int row;
+	int col;
+};
+
+void backtracking() {
+	// Make a struct to hold previous row and column values
+	Pair prevLoc[81];
+	// Start the struct size at 0
+	int prevLocSize = 0;
+	for (int i = 0; i < 9; i++) {
+		for (int j = 0; j < 9; j++) {
+			// If the value at a particular index is non-existent
+			if (board[i][j] == 32) {
+				// Go through the value of 1 through 9
+				for (int value = 1; value < 11; value++) {
+					// If you get to ten, it means none of the values fit
+					if (value == 10) {
+						board[i][j] = 32;
+						// Erase the last row and column used so we can backtrack
+						prevLocSize--;
+						// Assign the row and col to the previous row and column
+						i = prevLoc[prevLocSize].row;
+						j = prevLoc[prevLocSize].col;
+						// Assign the value to the previous value
+						value = board[i][j] - 48;
+						// Continue through the values
+						continue;
+					}
+					board[i][j] = value + 48;
+					// If one of the rules is broken, keep going through values
+					if (!sepinarow(i) || !sepinacol(j) || !sepinabox(i, j)) {
+						continue;
+					}
+					// Each time a placement works and it doesn't break rules, assign a new value in the struct
+					prevLoc[prevLocSize].row = i;
+					prevLoc[prevLocSize].col = j;
+					prevLocSize++;
+					// Now proceed through the columns, continuing along
+					break;
+				}
+			}
+		}
+	}
+}
+bool sepinacol(int col) {
+	for (int OriginalRow = 0; OriginalRow < 8; OriginalRow++) {
+		for (int AlternatingRow = OriginalRow + 1; AlternatingRow < 9; AlternatingRow++) {
+			if ((board[OriginalRow][col] == board[AlternatingRow][col]) && (board[OriginalRow][col] != ' ')) {
+				return false;
+			}
+		}
+	}
+	return true;
+}
+
+bool sepinarow(int row) {
+	for (int OriginalCol = 0; OriginalCol < 8; OriginalCol++) {
+		for (int AlternatingCol = OriginalCol + 1; AlternatingCol < 9; AlternatingCol++) {
+			if ((board[row][OriginalCol] == board[row][AlternatingCol]) && (board[row][OriginalCol] != ' ')) {
+				return false;
+			}
+		}
+	}
+	return true;
+}
+
+bool sepinabox(int i, int j) {
+	int countone = 0;
+	int counttwo = 0;
+	int countthree = 0;
+	int countfour = 0;
+	int countfive = 0;
+	int countsix = 0;
+	int countseven = 0;
+	int counteight = 0;
+	int countnine = 0;
+
+	for (int startingrow = 0; startingrow < 8; startingrow += 3) {
+		for (int startingcol = 0; startingcol < 8; startingcol += 3) {
+			for (row = startingrow; row < 3 + startingrow; row++) {
+				for (col = startingcol; col < 3 + startingcol; col++) {
+					if (board[row][col] == '1') {
+						countone++;
+					}
+					if (board[row][col] == '2') {
+						counttwo++;
+					}
+					if (board[row][col] == '3') {
+						countthree++;
+					}
+					if (board[row][col] == '4') {
+						countfour++;
+					}
+					if (board[row][col] == '5') {
+						countfive++;
+					}
+					if (board[row][col] == '6') {
+						countsix++;
+					}
+					if (board[row][col] == '7') {
+						countseven++;
+					}
+					if (board[row][col] == '8') {
+						counteight++;
+					}
+					if (board[row][col] == '9') {
+						countnine++;
+					}
+				}
+			}
+			if (countone > 1 || counttwo > 1 || countthree > 1 || countfour > 1 ||
+				countfive > 1 || countsix > 1 || countseven > 1 || counteight > 1 || countnine > 1) {
+				return false;
+			}
+			else {
+				countone = 0;
+				counttwo = 0;
+				countthree = 0;
+				countfour = 0;
+				countfive = 0;
+				countsix = 0;
+				countseven = 0;
+				counteight = 0;
+				countnine = 0;
+
+			}
+		}
+	}
+	return true;
+}
